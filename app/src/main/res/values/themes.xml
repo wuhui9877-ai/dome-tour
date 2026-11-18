@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme pattern follows the official PICO Spatial UI sample (Apache 2.0). -->
+    <style name="Theme.SpatialApp" parent="android:Theme.Translucent.NoTitleBar.Fullscreen" />
+</resources>

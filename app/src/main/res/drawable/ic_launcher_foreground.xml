@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Two overlapping floating windows (generic placeholder mark) -->
+    <path
+        android:fillColor="#FF7FB4FF"
+        android:pathData="M22,30 h52 a6,6 0,0 1,6 6 v40 a6,6 0,0 1,-6 6 H22 a6,6 0,0 1,-6 -6 V36 a6,6 0,0 1,6 -6 Z" />
+    <path
+        android:fillColor="#FF1B2A4A"
+        android:pathData="M34,22 h52 a6,6 0,0 1,6 6 v40 a6,6 0,0 1,-6 6 H34 a6,6 0,0 1,-6 -6 V28 a6,6 0,0 1,6 -6 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,32 h48 v6 H36 Z" />
+</vector>
