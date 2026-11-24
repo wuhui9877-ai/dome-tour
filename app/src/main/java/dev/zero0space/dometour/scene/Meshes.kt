@@ -117,15 +117,22 @@ fun cylinderMesh(
         val normal = Vector3(cos(a), 0f, sin(a))
         b.quad(ringBottom[i], ringBottom[i + 1], ringTop[i + 1], ringTop[i], normal)
     }
-    // Top cap fan.
-    val topCenter = Vector3(0f, half, 0f)
-    for (i in 0 until segments) {
-        b.tri(topCenter, ringTop[i], ringTop[i + 1], Vector3(0f, 1f, 0f))
+    // Top cap fan. Skipped when the top radius is 0 (cone): every ring
+    // vertex coincides with the center, so the whole fan would be
+    // zero-area triangles.
+    if (radiusTop > 0f) {
+        val topCenter = Vector3(0f, half, 0f)
+        for (i in 0 until segments) {
+            b.tri(topCenter, ringTop[i], ringTop[i + 1], Vector3(0f, 1f, 0f))
+        }
     }
-    // Bottom cap fan.
-    val bottomCenter = Vector3(0f, -half, 0f)
-    for (i in 0 until segments) {
-        b.tri(bottomCenter, ringBottom[i + 1], ringBottom[i], Vector3(0f, -1f, 0f))
+    // Bottom cap fan (same guard for symmetry; the bottom radius is never
+    // 0 in this project, but it would degenerate the same way).
+    if (radiusBottom > 0f) {
+        val bottomCenter = Vector3(0f, -half, 0f)
+        for (i in 0 until segments) {
+            b.tri(bottomCenter, ringBottom[i + 1], ringBottom[i], Vector3(0f, -1f, 0f))
+        }
     }
     return b.build()
 }
@@ -162,7 +169,15 @@ fun sphereMesh(radius: Float, latSegments: Int, lonSegments: Int): MeshModel {
             val cy = (a.y + c.y + d.y + e.y) / 4f
             val cz = (a.z + c.z + d.z + e.z) / 4f
             val len = kotlin.math.sqrt(cx * cx + cy * cy + cz * cz).coerceAtLeast(1e-6f)
-            b.quad(a, c, d, e, Vector3(cx / len, cy / len, cz / len))
+            val normal = Vector3(cx / len, cy / len, cz / len)
+            // The pole rings collapse to a single point, so the quad's
+            // triangle touching that pole is zero-area. Emit only the
+            // non-degenerate triangle at each pole.
+            when (lat) {
+                0 -> b.tri(a, d, e, normal)
+                latSegments - 1 -> b.tri(a, c, d, normal)
+                else -> b.quad(a, c, d, e, normal)
+            }
         }
     }
     return b.build()
@@ -203,7 +218,15 @@ fun hemisphereMesh(radius: Float, latSegments: Int, lonSegments: Int): MeshModel
             val cy = (a.y + c.y + d.y + e.y) / 4f
             val cz = (a.z + c.z + d.z + e.z) / 4f
             val len = kotlin.math.sqrt(cx * cx + cy * cy + cz * cz).coerceAtLeast(1e-6f)
-            b.quad(a, c, d, e, Vector3(cx / len, cy / len, cz / len))
+            val normal = Vector3(cx / len, cy / len, cz / len)
+            // The apex ring (lat 0) collapses to a single point, so the
+            // quad's first triangle is zero-area; emit only the second.
+            // (The equator band is a full ring and stays a normal quad.)
+            if (lat == 0) {
+                b.tri(a, d, e, normal)
+            } else {
+                b.quad(a, c, d, e, normal)
+            }
         }
     }
     return b.build()

@@ -105,6 +105,17 @@ fun DomeTourPage(modifier: Modifier = Modifier) {
         }
     }
 
+    // Loading watchdog: if SpatialView never calls `initial`, the diorama
+    // would sit on "加载中…" forever. After a grace period, fail over to
+    // the fallback message instead.
+    LaunchedEffect(Unit) {
+        delay(10_000L)
+        if (!sceneReady && !sceneFailed) {
+            Log.e(TAG, "Scene init timed out; showing fallback")
+            sceneFailed = true
+        }
+    }
+
     // Animation driver: Compose frame callbacks advance the drone patrol,
     // rotor spin, and airship bobbing once per frame. This runs in UI-layer
     // code (withFrameNanos), so it does not depend on ECS systems ticking
@@ -152,8 +163,11 @@ fun DomeTourPage(modifier: Modifier = Modifier) {
     // onDispose always sees the latest handles.
     DisposableEffect(Unit) {
         onDispose {
-            holder.handles?.dispose()
+            // Null first, then dispose: this closes the window in which a
+            // frame callback could still reach already-destroyed handles.
+            val h = holder.handles
             holder.handles = null
+            h?.dispose()
         }
     }
 
@@ -237,17 +251,21 @@ fun DomeTourPage(modifier: Modifier = Modifier) {
                         // A failed scene build must not take down the window:
                         // title, controls, and subwindow buttons stay usable
                         // and the diorama area shows a fallback message.
-                        try {
-                            holder.handles = buildCity(content)
-                            if (holder.handles == null) {
-                                Log.e(TAG, "Scene build returned null")
+                        // Guard against a second call: rebuilding would leak
+                        // the first scene and show two overlapping cities.
+                        if (holder.handles == null) {
+                            try {
+                                holder.handles = buildCity(content)
+                                if (holder.handles == null) {
+                                    Log.e(TAG, "Scene build returned null")
+                                    sceneFailed = true
+                                } else {
+                                    sceneReady = true
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Scene init failed; controls stay available", e)
                                 sceneFailed = true
-                            } else {
-                                sceneReady = true
                             }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Scene init failed; controls stay available", e)
-                            sceneFailed = true
                         }
                     },
                     update = { _, _ ->

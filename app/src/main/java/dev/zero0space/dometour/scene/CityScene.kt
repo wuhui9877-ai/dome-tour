@@ -192,6 +192,22 @@ fun buildCity(content: SpatialViewContent): CitySceneHandles? {
     val highlightRingMesh = mesh(ringMesh(0.082f, 0.094f, 40))
     val waterDiscMesh = mesh(discMesh(0.03f, 24))
 
+    // Key resources: without the shared unit meshes or the dome shell there
+    // is nothing meaningful to show. Return null so the caller displays the
+    // fallback instead of an empty dome (a silent empty scene would
+    // otherwise report success). Close what was already created first.
+    if (unitBox == null || unitCylinder == null || domeMesh == null) {
+        meshes.forEach { created ->
+            try {
+                if (created.valid) created.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Mesh close failed: ${e.message}")
+            }
+        }
+        Log.e(TAG, "Key scene meshes missing; scene build aborted")
+        return null
+    }
+
     // Materials. Null results (creation failed) are tracked as null and the
     // affected parts are skipped when building entities.
     fun <T : Material> track(material: T?): T? {

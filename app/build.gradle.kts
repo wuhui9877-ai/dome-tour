@@ -13,7 +13,7 @@ android {
         minSdk = 35
         targetSdk = 35
         versionCode = 1
-        versionName = libs.versions.spatialBom.get()
+        versionName = "1.0"
 
         vectorDrawables { useSupportLibrary = true }
         ndk { abiFilters.add("arm64-v8a") }
